@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<project name="PasoeSoftware" default="BuildDone" basedir="..">
+
+    <property name="Docker.Dir" location="Work/Input/Docker" />
+    <property name="DLC"        location="C:/Progress/OpenEdge127_64" />
+    <property name="PCT.JAR"    location="${DLC}/PCT/PCT.jar" />
+
+	<!--
+ 	 * PCT Initialisation
+	 *-->
+	<taskdef resource="PCT.properties">
+	  <classpath>
+		<pathelement location="${PCT.JAR}"/>
+	  </classpath>
+	</taskdef>
+	
+	<typedef resource="types.properties">
+	  <classpath>
+		<pathelement location="${PCT.JAR}"/>
+	  </classpath>
+	</typedef>    
+
+    <target name="Init">
+        <delete dir="Work" />
+        <mkdir  dir="Work" />
+        <mkdir  dir="Work/Output" />
+        <mkdir  dir="Work/Input" />
+        <mkdir  dir="Work/Output/Rcode" />
+        <mkdir  dir="${Docker.Dir}" />
+    </target>
+
+    <target name="Compile" depends="Init">
+        <PCTCompile
+            graphicalMode="false"
+            destDir="Work/Output/Rcode"
+            dlcHome="${DLC}">
+
+            <fileset dir="OpenEdge" includes="**/*.cls" />
+
+            <propath>
+                <pathelement path="${DLC}/tty/netlib/OpenEdge.Net.pl" />
+            </propath>
+
+        </PCTCompile>
+
+
+    </target>
+
+    <target name="CreateLibrary" depends="Compile">
+        <PCTLibrary
+            destfile="${Docker.Dir}/Application.pl" 
+            dlcHome="${DLC}">
+
+            <fileset dir="Work/Output/Rcode">
+                <include name="**/*.r" />
+            </fileset>
+        </PCTLibrary>
+    </target>
+
+    <target name="BundleDocker" depends="CreateLibrary">
+        <copy file="Docker/Dockerfile"                                                  todir="${Docker.Dir}" />
+        <copy file="JDK/OpenJDK17U-jdk_x64_linux_hotspot_17.0.4.1_1.tar.gz"             todir="${Docker.Dir}" />
+        <copy file="Docker/start.sh"                                                    todir="${Docker.Dir}" />
+
+    </target>
+
+    <target name="BuildDone" depends="BundleDocker">
+        <echo message="Build Done!" />
+    </target>
+
+</project>

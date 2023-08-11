@@ -1,0 +1,22 @@
+pipeline {
+    agent any
+
+    stages {
+        stage('Build') {
+            steps {
+                withAnt(installation: 'DlcAnt') {
+                    bat "ant -f BuildScripts/Build.xml"
+                }
+            }
+        }
+        stage('Docker') {
+            steps {
+                dir('Work/Input/Docker') 
+                    {
+                        echo "Building Docker Image"
+                        bat "docker build . --tag pug-pasoe:${BUILD_NUMBER}"
+                    }
+            }
+        }
+    }
+}
